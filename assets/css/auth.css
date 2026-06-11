@@ -1,0 +1,197 @@
+/* Reset & Base */
+*, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+:root {
+    --bg-base:        #0f1117;
+    --bg-card:        #1a1d27;
+    --bg-input:       #22263a;
+    --border-color:   #2e3250;
+    --accent-blue:    #4f7cff;
+    --accent-hover:   #3d66e8;
+    --text-primary:   #e8eaf0;
+    --text-secondary: #8b90a7;
+    --text-muted:     #5c6078;
+    --danger:         #e05a5a;
+    --success:        #4caf8a;
+    --warning:        #e0a550;
+    --info:           #4a9fd4;
+}
+
+body.grid-auth-body {
+    background-color: var(--bg-base);
+    color: var(--text-primary);
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+}
+
+/* Wrapper & Card */
+.auth-wrapper {
+    width: 100%;
+    max-width: 420px;
+}
+
+.auth-card {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 2rem 2rem;
+}
+
+/* Logo */
+.auth-logo {
+    display: inline-block;
+    font-size: 2rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    color: var(--accent-blue);
+    font-family: 'Inter', sans-serif;
+}
+
+.auth-subtitle {
+    color: var(--text-secondary);
+    font-size: 0.78rem;
+    margin-top: 0.2rem;
+    letter-spacing: 0.04em;
+}
+
+/* Label */
+.form-label {
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    font-weight: 500;
+    margin-bottom: 0.4rem;
+}
+
+/* Input */
+.form-control {
+    background-color: var(--bg-input) !important;
+    border: 1px solid var(--border-color) !important;
+    color: var(--text-primary) !important;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    padding: 0.55rem 0.85rem;
+    transition: border-color 0.2s ease;
+}
+
+.form-control:focus {
+    border-color: var(--accent-blue) !important;
+    box-shadow: 0 0 0 2px rgba(79, 124, 255, 0.2) !important;
+    outline: none;
+}
+
+.form-control::placeholder {
+    color: var(--text-muted);
+}
+
+.form-text {
+    color: var(--text-muted);
+    font-size: 0.78rem;
+    margin-top: 0.3rem;
+}
+
+/* Input Group (password toggle) */
+.input-group .btn-outline-secondary {
+    background-color: var(--bg-input);
+    border: 1px solid var(--border-color);
+    border-left: none;
+    color: var(--text-muted);
+    border-radius: 0 6px 6px 0;
+    padding: 0.55rem 0.85rem;
+}
+
+.input-group .btn-outline-secondary:hover {
+    background-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+.input-group .form-control {
+    border-right: none !important;
+    border-radius: 6px 0 0 6px !important;
+}
+
+/* Button Primary */
+.btn-primary {
+    background-color: var(--accent-blue);
+    border: none;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    padding: 0.6rem 1rem;
+    transition: background-color 0.2s ease;
+}
+
+.btn-primary:hover,
+.btn-primary:focus {
+    background-color: var(--accent-hover);
+    box-shadow: none;
+}
+
+/* Alert */
+.alert {
+    border: none;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    padding: 0.75rem 1rem;
+}
+
+.alert-danger {
+    background-color: rgba(224, 90, 90, 0.15);
+    color: #f07070;
+    border-left: 3px solid var(--danger);
+}
+
+.alert-success {
+    background-color: rgba(76, 175, 138, 0.15);
+    color: #6bcfa8;
+    border-left: 3px solid var(--success);
+}
+
+.alert-warning {
+    background-color: rgba(224, 165, 80, 0.15);
+    color: #e8b870;
+    border-left: 3px solid var(--warning);
+}
+
+.alert-info {
+    background-color: rgba(74, 159, 212, 0.15);
+    color: #70badc;
+    border-left: 3px solid var(--info);
+}
+
+.btn-close {
+    filter: invert(1) opacity(0.5);
+}
+
+/* Link */
+a {
+    color: var(--accent-blue);
+}
+
+a:hover {
+    color: var(--accent-hover);
+}
+
+/* Text Muted Override */
+.text-muted {
+    color: var(--text-muted) !important;
+}
+
+/* Heading */
+h5 {
+    color: var(--text-primary);
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+    .auth-card {
+        padding: 1.5rem 1.25rem;
+    }
+}
