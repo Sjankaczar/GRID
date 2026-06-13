@@ -1,4 +1,8 @@
 <?php
+// =============================================================
+// admin/dashboard.php
+// Dashboard Admin — hanya Admin yang bisa akses
+// =============================================================
 
 session_start();
 require_once '../config/config.php';
@@ -6,10 +10,11 @@ require_once '../koneksi.php';
 require_once '../includes/auth.php';
 require_once '../includes/functions.php';
 
-// hanya Admin yang bisa akses
+// Proteksi: hanya Admin yang bisa akses halaman ini
 require_role([ROLE_ADMIN]);
 
 // Ambil statistik dashboard
+// TODO: Implementasi query statistik real-time (minggu 2)
 $stats = [
     'total_projects'    => 0,
     'total_users'       => 0,

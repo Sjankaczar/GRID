@@ -12,7 +12,7 @@ redirect_if_logged_in();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GRID - Game Repository & Indie Devlog</title>
+    <title>GRID - Game Repository & Devlog</title>
     
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -64,10 +64,10 @@ redirect_if_logged_in();
                         v1.0 Internal Portal
                     </div>
                     <h1 class="display-4 fw-bold mb-4">
-                        Game Repository & <br><span class="text-accent">Indie Devlog</span>
+                        Game Repository & <br><span class="text-accent">Devlog</span>
                     </h1>
                     <p class="lead text-secondary mb-5">
-                        Platform kolaborasi internal untuk tim game indie. Kelola aset 2D, pantau progres dengan Kanban, 
+                        Platform kolaborasi internal untuk tim pengembangan game. Kelola berbagai aset game, pantau progres dengan Kanban, 
                         dan dokumentasikan perjalanan devlog dengan rapi dalam satu tempat.
                     </p>
                     <div class="d-flex justify-content-center gap-3">
@@ -86,7 +86,7 @@ redirect_if_logged_in();
         <section id="features" class="container py-5 border-top" style="border-color: var(--border-color) !important;">
             <div class="text-center mb-5">
                 <h2 class="fw-bold">Fitur Utama</h2>
-                <p class="text-secondary">Dibangun tanpa framework JS, murni Vanilla & Performa Tinggi</p>
+                <p class="text-secondary">Solusi lengkap untuk manajemen proyek pengembangan game Anda</p>
             </div>
             
             <div class="row g-4">
@@ -98,7 +98,7 @@ redirect_if_logged_in();
                         </div>
                         <h5 class="fw-semibold">Manajemen Aset</h5>
                         <p class="text-secondary small mb-0">
-                            Unggah dan kelola aset game 2D (sprite, tileset) dengan sistem filter grid berbasis JavaScript murni (DOM Manipulation langsung).
+                            Unggah dan kelola berbagai aset game (sprite, model 3D, audio) dengan sistem filter grid yang cepat dan responsif.
                         </p>
                     </div>
                 </div>
