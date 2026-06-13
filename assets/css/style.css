@@ -1,0 +1,127 @@
+/* =========================================
+   Global Layout & Utility Variables
+   Theme: Dark Mode Murni
+========================================= */
+:root {
+    --bg-base:        #0f1117;
+    --bg-card:        #1a1d27;
+    --bg-input:       #22263a;
+    --border-color:   #2e3250;
+    --accent-blue:    #4f7cff;
+    --accent-hover:   #3d66e8;
+    --text-primary:   #e8eaf0;
+    --text-secondary: #8b90a7;
+    --text-muted:     #5c6078;
+}
+
+/* =========================================
+   Reset & Body Styles
+========================================= */
+body {
+    background-color: var(--bg-base);
+    color: var(--text-primary);
+    font-family: 'Inter', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+/* =========================================
+   Navbar Component
+========================================= */
+.navbar-grid {
+    background-color: var(--bg-card);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.navbar-grid .navbar-brand {
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    color: var(--accent-blue);
+}
+
+.navbar-grid .nav-link {
+    color: var(--text-secondary);
+    font-weight: 500;
+    transition: color 0.2s ease;
+}
+
+.navbar-grid .nav-link:hover {
+    color: var(--text-primary);
+}
+
+.navbar-toggler {
+    border: none;
+}
+
+.navbar-toggler:focus {
+    box-shadow: none;
+}
+
+/* =========================================
+   Solid Card Component (TANPA Box-Shadow)
+========================================= */
+.card-grid {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.card-grid:hover {
+    border-color: var(--accent-blue);
+    transform: translateY(-2px);
+}
+
+/* =========================================
+   Button Customization
+========================================= */
+.btn-grid-primary {
+    background-color: var(--accent-blue);
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    font-weight: 500;
+    padding: 0.5rem 1.25rem;
+    transition: background-color 0.2s ease;
+}
+
+.btn-grid-primary:hover {
+    background-color: var(--accent-hover);
+    color: #fff;
+}
+
+.btn-grid-outline {
+    background-color: transparent;
+    color: var(--accent-blue);
+    border: 1px solid var(--accent-blue);
+    border-radius: 6px;
+    font-weight: 500;
+    padding: 0.5rem 1.25rem;
+    transition: all 0.2s ease;
+}
+
+.btn-grid-outline:hover {
+    background-color: var(--accent-blue);
+    color: #fff;
+}
+
+/* =========================================
+   Clean Utility Classes
+========================================= */
+.text-accent { color: var(--accent-blue) !important; }
+.text-secondary { color: var(--text-secondary) !important; }
+.text-muted { color: var(--text-muted) !important; }
+.bg-input { background-color: var(--bg-input) !important; }
+
+/* Custom sizing utility for layout */
+.min-vh-80 { min-height: 80vh; }
+
+/* Wrapper untuk konten utama (agar footer selalu di bawah) */
+main.flex-shrink-0 {
+    flex-shrink: 0;
+    flex-grow: 1;
+}
