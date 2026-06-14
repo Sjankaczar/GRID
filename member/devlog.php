@@ -201,18 +201,19 @@ $extra_css = '
     flex-wrap: wrap;
 }
 .devlog-toolbar button {
-    background: transparent;
+    background: var(--bg-card);
     border: 1px solid var(--border-color);
     color: var(--text-secondary);
     border-radius: 4px;
-    padding: 4px 10px;
+    padding: 6px 12px;
     font-size: 0.85rem;
     cursor: pointer;
-    transition: all 0.15s ease;
+    transition: all 0.2s ease;
 }
 .devlog-toolbar button:hover {
-    background: var(--border-color);
-    color: var(--text-primary);
+    background: rgba(79, 124, 255, 0.15);
+    border-color: var(--accent-blue);
+    color: var(--accent-blue);
 }
 .devlog-toolbar .sep {
     width: 1px;
@@ -446,9 +447,14 @@ include '../templates/member_header.php';
 <?php else: ?>
 
 <div class="row justify-content-center">
-<div class="col-12 col-lg-9">
+<div class="col-12 col-lg-10">
 
-    <form method="POST" id="devlog-form" novalidate>
+    <div class="card">
+        <div class="card-body p-4 p-md-5">
+            <h5 class="mb-4 pb-3 border-bottom text-primary" style="font-weight: 600;">
+                <i class="fa fa-feather-alt me-2"></i><?= $edit_id ? 'Edit Entri Devlog' : 'Tulis Entri Devlog Baru' ?>
+            </h5>
+            <form method="POST" id="devlog-form" novalidate>
         <?= csrf_field() ?>
         <input type="hidden" name="action"    value="<?= $edit_id ? 'update' : 'store' ?>">
         <input type="hidden" name="konten"    id="konten-hidden">
@@ -574,8 +580,9 @@ include '../templates/member_header.php';
                 <?= $edit_id ? 'Simpan Perubahan' : 'Simpan Devlog' ?>
             </button>
             <a href="<?= APP_URL ?>/member/devlog.php" class="btn btn-outline-secondary">Batal</a>
-        </div>
-    </form>
+        </form>
+    </div>
+    </div>
 
 </div>
 </div>
