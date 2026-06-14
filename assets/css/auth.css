@@ -1,24 +1,26 @@
 /* Reset & Base */
-*, *::before, *::after {
+*,
+*::before,
+*::after {
     box-sizing: border-box;
     margin: 0;
     padding: 0;
 }
 
 :root {
-    --bg-base:        #0f1117;
-    --bg-card:        #1a1d27;
-    --bg-input:       #22263a;
-    --border-color:   #2e3250;
-    --accent-blue:    #4f7cff;
-    --accent-hover:   #3d66e8;
-    --text-primary:   #e8eaf0;
+    --bg-base: #0f1117;
+    --bg-card: #1a1d27;
+    --bg-input: #22263a;
+    --border-color: #2e3250;
+    --accent-blue: #4f7cff;
+    --accent-hover: #3d66e8;
+    --text-primary: #e8eaf0;
     --text-secondary: #8b90a7;
-    --text-muted:     #5c6078;
-    --danger:         #e05a5a;
-    --success:        #4caf8a;
-    --warning:        #e0a550;
-    --info:           #4a9fd4;
+    --text-muted: #5c6078;
+    --danger: #e05a5a;
+    --success: #4caf8a;
+    --warning: #e0a550;
+    --info: #4a9fd4;
 }
 
 body.grid-auth-body {

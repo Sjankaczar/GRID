@@ -1,212 +1,214 @@
 <?php
-// =============================================================
-// admin/dashboard.php
-// Dashboard Admin — hanya Admin yang bisa akses
-// =============================================================
 
 session_start();
 require_once '../config/config.php';
 require_once '../koneksi.php';
 require_once '../includes/auth.php';
 require_once '../includes/functions.php';
+require_once '../includes/db_helpers.php';
 
-// Proteksi: hanya Admin yang bisa akses halaman ini
+// hanya Admin yang bisa akses
 require_role([ROLE_ADMIN]);
 
 // Ambil statistik dashboard
-// TODO: Implementasi query statistik real-time (minggu 2)
-$stats = [
-    'total_projects'    => 0,
-    'total_users'       => 0,
-    'pending_approvals' => 0,
-    'total_assets'      => 0,
-];
+$stats = ['total_projects' => 0, 
+          'total_users' => 0,
+          'pending_approvals' => 0,
+          'total_assets' => 0, 
+          'total_devlogs' => 0];
 
 try {
-    $stmt = $pdo->query('SELECT COUNT(*) as count FROM projects');
-    $stats['total_projects'] = $stmt->fetch()['count'];
+    $stats['total_projects']    = (int) $pdo->query('SELECT COUNT(*) FROM projects')->fetchColumn();
+    $stats['total_users']       = (int) $pdo->query('SELECT COUNT(*) FROM users WHERE is_active = TRUE AND role != "Guest"')->fetchColumn();
+    $stats['pending_approvals'] = get_pending_assets_count($pdo);
+    $stats['total_assets']      = (int) $pdo->query('SELECT COUNT(*) FROM assets')->fetchColumn();
+    $stats['total_devlogs']     = (int) $pdo->query('SELECT COUNT(*) FROM devlogs WHERE status = "Published"')->fetchColumn();
 
-    $stmt = $pdo->query('SELECT COUNT(*) as count FROM users WHERE is_active = TRUE');
-    $stats['total_users'] = $stmt->fetch()['count'];
+    // Aset pending terbaru (5 item)
+    $recent_pending = get_assets_filtered($pdo, 'Pending');
+    $recent_pending = array_slice($recent_pending, 0, 5);
 
-    $stmt = $pdo->query('SELECT COUNT(*) as count FROM assets WHERE status = "Pending"');
-    $stats['pending_approvals'] = $stmt->fetch()['count'];
-
-    $stmt = $pdo->query('SELECT COUNT(*) as count FROM assets');
-    $stats['total_assets'] = $stmt->fetch()['count'];
-} catch (PDOException $e) {
-    error_log($e->getMessage());
+    // Proyek terbaru
+    $all_projects = get_all_projects($pdo);
+    $recent_projects = array_slice($all_projects, 0, 5);
+} catch (PDOException $ex) {
+    error_log($ex->getMessage());
+    $recent_pending  = [];
+    $recent_projects = [];
 }
+
+// Akun menunggu aktivasi
+$pending_users = [];
+try {
+    $stmt = $pdo->query('SELECT id, username, nama_lengkap, email, created_at FROM users WHERE is_active = FALSE ORDER BY created_at DESC LIMIT 5');
+    $pending_users = $stmt->fetchAll();
+} catch (PDOException $ex) { error_log($ex->getMessage()); }
+
+$page_title = 'Dashboard Admin';
+$active_nav = 'dashboard';
+include '../templates/admin_header.php';
 ?>
-<!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Admin — <?= APP_NAME ?></title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="../assets/css/dashboard.css">
-</head>
-<body class="grid-body">
 
-<div class="container-fluid">
-    <div class="row">
-        <!-- Sidebar -->
-        <nav class="col-12 col-md-3 col-lg-2 sidebar">
-            <div class="sidebar-sticky p-3">
-                <div class="sidebar-header mb-4">
-                    <span class="sidebar-logo">GRID</span>
-                </div>
-
-                <ul class="nav flex-column">
-                    <li class="nav-item">
-                        <a class="nav-link active" href="dashboard.php">
-                            <i class="fa fa-chart-line me-2"></i>Dashboard
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="projects.php">
-                            <i class="fa fa-gamepad me-2"></i>Proyek
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="assets.php">
-                            <i class="fa fa-image me-2"></i>Aset
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="users.php">
-                            <i class="fa fa-users me-2"></i>Pengguna
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="reports.php">
-                            <i class="fa fa-file-pdf me-2"></i>Laporan
-                        </a>
-                    </li>
-                </ul>
-
-                <hr>
-
-                <div class="user-menu">
-                    <div class="user-info mb-2">
-                        <small class="text-muted">Logged in as</small><br>
-                        <strong><?= e($_SESSION['nama_lengkap']) ?></strong><br>
-                        <small class="badge bg-success"><?= e($_SESSION['role']) ?></small>
-                    </div>
-                    <form method="POST" action="../logout.php">
-                        <?php include '../includes/csrf.php'; echo csrf_field(); ?>
-                        <button type="submit" class="btn btn-sm btn-outline-danger w-100">
-                            <i class="fa fa-sign-out-alt me-1"></i>Logout
-                        </button>
-                    </form>
-                </div>
+<!-- Stats Cards -->
+<div class="row mb-4">
+    <?php
+    $stat_items = [
+        ['value' => $stats['total_projects'],    'label' => 'Proyek',          'icon' => 'fa-gamepad',       'color' => 'bg-primary'],
+        ['value' => $stats['total_users'],        'label' => 'Anggota Aktif',   'icon' => 'fa-users',         'color' => 'bg-success'],
+        ['value' => $stats['pending_approvals'],  'label' => 'Aset Pending',    'icon' => 'fa-hourglass-half','color' => 'bg-warning'],
+        ['value' => $stats['total_assets'],       'label' => 'Total Aset',      'icon' => 'fa-image',         'color' => 'bg-info'],
+        ['value' => $stats['total_devlogs'],      'label' => 'Devlog Published','icon' => 'fa-book-open',     'color' => 'bg-secondary'],
+    ];
+    foreach ($stat_items as $s):
+    ?>
+    <div class="col-6 col-lg-auto mb-3 flex-lg-fill">
+        <div class="stat-card">
+            <div class="stat-icon <?= $s['color'] ?>"><i class="fa <?= $s['icon'] ?>"></i></div>
+            <div class="stat-content">
+                <span class="stat-value"><?= $s['value'] ?></span>
+                <span class="stat-label"><?= $s['label'] ?></span>
             </div>
-        </nav>
+        </div>
+    </div>
+    <?php endforeach; ?>
+</div>
 
-        <!-- Main Content -->
-        <main class="col-12 col-md-9 col-lg-10 ms-sm-auto px-md-4">
-            <!-- Topbar -->
-            <div class="topbar border-bottom py-3 mb-4">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h4 class="mb-0">Dashboard Admin</h4>
-                        <small class="text-muted">Selamat datang kembali, <?= e(explode(' ', $_SESSION['nama_lengkap'])[0]) ?>!</small>
-                    </div>
-                    <div>
-                        <span class="text-muted small"><?= date('d M Y H:i') ?></span>
-                    </div>
+<div class="row">
+    <!-- Aset Pending -->
+    <div class="col-12 col-lg-6 mb-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h6 class="card-title mb-0">
+                        <i class="fa fa-hourglass-half me-2 text-warning"></i>Aset Menunggu Persetujuan
+                    </h6>
+                    <a href="<?= APP_URL ?>/admin/assets.php?status=Pending"
+                       class="btn btn-sm btn-outline-warning">Lihat Semua</a>
                 </div>
+                <?php if (empty($recent_pending)): ?>
+                    <p class="text-muted small text-center py-3">Tidak ada aset yang menunggu. ✓</p>
+                <?php else: ?>
+                    <?php foreach ($recent_pending as $aset): ?>
+                    <div class="d-flex justify-content-between align-items-center py-2"
+                         style="border-bottom:1px solid var(--border-color);">
+                        <div>
+                            <div class="small fw-500"><?= e(truncate($aset['nama_aset'], 35)) ?></div>
+                            <small class="text-muted">
+                                <?= e($aset['kategori']) ?> · <?= e($aset['project_name'] ?? '—') ?>
+                            </small>
+                        </div>
+                        <div class="d-flex gap-1">
+                            <form method="POST" action="<?= APP_URL ?>/admin/assets.php">
+                                <?= csrf_field() ?>
+                                <input type="hidden" name="action"   value="approve">
+                                <input type="hidden" name="asset_id" value="<?= e($aset['id']) ?>">
+                                <button type="submit" class="btn btn-success btn-sm" title="Setujui">
+                                    <i class="fa fa-check"></i>
+                                </button>
+                            </form>
+                            <form method="POST" action="<?= APP_URL ?>/admin/assets.php">
+                                <?= csrf_field() ?>
+                                <input type="hidden" name="action"   value="reject">
+                                <input type="hidden" name="asset_id" value="<?= e($aset['id']) ?>">
+                                <button type="submit" class="btn btn-danger btn-sm" title="Tolak">
+                                    <i class="fa fa-times"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                    <?php endforeach; ?>
+                <?php endif; ?>
             </div>
+        </div>
+    </div>
 
-            <!-- Flash Message -->
-            <div class="mb-4">
-                <?php render_flash(); ?>
+    <!-- Akun Menunggu Aktivasi -->
+    <div class="col-12 col-lg-6 mb-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h6 class="card-title mb-0">
+                        <i class="fa fa-user-clock me-2 text-info"></i>Akun Menunggu Aktivasi
+                    </h6>
+                    <a href="<?= APP_URL ?>/admin/users.php"
+                       class="btn btn-sm btn-outline-info">Kelola User</a>
+                </div>
+                <?php if (empty($pending_users)): ?>
+                    <p class="text-muted small text-center py-3">Tidak ada akun yang menunggu. ✓</p>
+                <?php else: ?>
+                    <?php foreach ($pending_users as $u): ?>
+                    <div class="d-flex justify-content-between align-items-center py-2"
+                         style="border-bottom:1px solid var(--border-color);">
+                        <div>
+                            <div class="small fw-500"><?= e($u['nama_lengkap']) ?></div>
+                            <small class="text-muted">@<?= e($u['username']) ?></small>
+                        </div>
+                        <small class="text-muted"><?= format_tanggal($u['created_at']) ?></small>
+                    </div>
+                    <?php endforeach; ?>
+                <?php endif; ?>
             </div>
+        </div>
+    </div>
 
-            <!-- Stats Cards -->
-            <div class="row mb-4">
-                <div class="col-12 col-sm-6 col-lg-3 mb-3">
-                    <div class="stat-card">
-                        <div class="stat-icon bg-primary">
-                            <i class="fa fa-gamepad"></i>
-                        </div>
-                        <div class="stat-content">
-                            <span class="stat-value"><?= $stats['total_projects'] ?></span>
-                            <span class="stat-label">Proyek Aktif</span>
-                        </div>
-                    </div>
+    <!-- Proyek Terbaru -->
+    <div class="col-12 mb-4">
+        <div class="card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h6 class="card-title mb-0">
+                        <i class="fa fa-gamepad me-2 text-primary"></i>Proyek
+                    </h6>
+                    <a href="<?= APP_URL ?>/admin/projects.php" class="btn btn-sm btn-outline-primary">
+                        Kelola Proyek
+                    </a>
                 </div>
-
-                <div class="col-12 col-sm-6 col-lg-3 mb-3">
-                    <div class="stat-card">
-                        <div class="stat-icon bg-success">
-                            <i class="fa fa-users"></i>
-                        </div>
-                        <div class="stat-content">
-                            <span class="stat-value"><?= $stats['total_users'] ?></span>
-                            <span class="stat-label">Anggota Aktif</span>
-                        </div>
+                <?php if (empty($recent_projects)): ?>
+                    <p class="text-muted small text-center py-3">
+                        Belum ada proyek.
+                        <a href="<?= APP_URL ?>/admin/projects.php?view=form">Buat sekarang</a>.
+                    </p>
+                <?php else: ?>
+                    <div class="table-responsive">
+                        <table class="table mb-0" style="color:var(--text-primary);font-size:0.88rem;">
+                            <thead style="color:var(--text-secondary);font-size:0.8rem;border-color:var(--border-color);">
+                                <tr>
+                                    <th class="pb-2">Nama Game</th>
+                                    <th class="pb-2">Genre</th>
+                                    <th class="pb-2">Status</th>
+                                    <th class="pb-2">Anggota</th>
+                                    <th class="pb-2">Target Rilis</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($recent_projects as $proj): ?>
+                                <tr style="border-color:var(--border-color);">
+                                    <td class="py-2">
+                                        <a href="<?= APP_URL ?>/admin/projects.php?view=form&id=<?= urlencode($proj['id']) ?>"
+                                           class="text-decoration-none fw-500"
+                                           style="color:var(--accent-blue);">
+                                            <?= e($proj['nama_game']) ?>
+                                        </a>
+                                    </td>
+                                    <td class="py-2 text-muted"><?= e($proj['genre'] ?: '—') ?></td>
+                                    <td class="py-2">
+                                        <span class="badge <?= badge_status_proyek($proj['status']) ?>">
+                                            <?= e($proj['status']) ?>
+                                        </span>
+                                    </td>
+                                    <td class="py-2 text-muted"><?= (int)$proj['total_members'] ?></td>
+                                    <td class="py-2 text-muted">
+                                        <?= $proj['target_rilis'] ? format_tanggal($proj['target_rilis']) : '—' ?>
+                                    </td>
+                                </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
                     </div>
-                </div>
-
-                <div class="col-12 col-sm-6 col-lg-3 mb-3">
-                    <div class="stat-card">
-                        <div class="stat-icon bg-warning">
-                            <i class="fa fa-hourglass-half"></i>
-                        </div>
-                        <div class="stat-content">
-                            <span class="stat-value"><?= $stats['pending_approvals'] ?></span>
-                            <span class="stat-label">Aset Menunggu</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-12 col-sm-6 col-lg-3 mb-3">
-                    <div class="stat-card">
-                        <div class="stat-icon bg-info">
-                            <i class="fa fa-image"></i>
-                        </div>
-                        <div class="stat-content">
-                            <span class="stat-value"><?= $stats['total_assets'] ?></span>
-                            <span class="stat-label">Total Aset</span>
-                        </div>
-                    </div>
-                </div>
+                <?php endif; ?>
             </div>
-
-            <!-- Quick Actions -->
-            <div class="row mb-4">
-                <div class="col-12">
-                    <div class="card">
-                        <div class="card-body">
-                            <h6 class="card-title mb-3">Aksi Cepat</h6>
-                            <div class="d-flex flex-wrap gap-2">
-                                <a href="projects.php" class="btn btn-sm btn-outline-primary">
-                                    <i class="fa fa-plus me-1"></i>Buat Proyek
-                                </a>
-                                <a href="users.php" class="btn btn-sm btn-outline-success">
-                                    <i class="fa fa-check me-1"></i>Setujui Pengguna
-                                </a>
-                                <a href="assets.php" class="btn btn-sm btn-outline-warning">
-                                    <i class="fa fa-list me-1"></i>Review Aset
-                                </a>
-                                <a href="reports.php" class="btn btn-sm btn-outline-info">
-                                    <i class="fa fa-download me-1"></i>Ekspor Laporan
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-        </main>
+        </div>
     </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+<?php include '../templates/admin_footer.php'; ?>
