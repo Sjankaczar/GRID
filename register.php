@@ -182,6 +182,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <div class="auth-wrapper">
     <div class="auth-card">
 
+        <!-- Back Button -->
+        <a href="index.php" class="text-decoration-none text-muted small d-inline-block mb-4" style="transition: color 0.2s;" onmouseover="this.style.color=\'var(--accent-blue)\'" onmouseout="this.style.color=\'\'">
+            <i class="fa fa-arrow-left me-1"></i> Kembali ke Beranda
+        </a>
+
         <!-- Logo & Judul -->
         <div class="auth-header text-center mb-4">
             <span class="auth-logo">GRID</span>
@@ -307,9 +312,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
                 <div class="form-text">
                     Pilih studio dari daftar atau ketik kode yang diberikan Admin.
-                    <?php if (!empty($all_orgs)): ?>
-                    <span class="text-info"><?= count($all_orgs) ?> studio tersedia.</span>
-                    <?php endif; ?>
                 </div>
             </div>
 
