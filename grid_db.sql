@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Jun 15, 2026 at 03:38 PM
+-- Generation Time: Jun 15, 2026 at 09:39 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -52,6 +52,34 @@ INSERT INTO `assets` (`id`, `project_id`, `nama_aset`, `kategori`, `file_url`, `
 ('1b6aab54-0ea4-43d9-9195-601b827c52ab', 'e80e9911-9b67-4a95-bb4f-6828b3a658f2', 'apa aja', 'Sprite', '/uploads/sprite/1781525144_RobloxScreenShot20250306_055952482png', NULL, 2031, 'png', '', '1.0', NULL, 'Approved', '2026-06-15 12:05:44'),
 ('b36cd18a-0fa7-4dd9-b2de-4b2c83381c83', '633f7dce-d5f1-46fc-8cdd-50289cd86471', 'apa aja3', 'Sprite', '/uploads/sprite/1781530544_RobloxScreenShot20250306_055952482png', NULL, 2031, 'png', '', '1.0', 'd530beb7-5d28-4988-bfc2-e54b582fade6', 'Approved', '2026-06-15 13:35:44'),
 ('e7233bc8-0a19-4204-b746-00e73bc7c98b', 'e80e9911-9b67-4a95-bb4f-6828b3a658f2', 'apa aja2', 'Sprite', '/uploads/sprite/1781525385_RobloxScreenShot20250306_055952482png', NULL, 2031, 'png', '', '1.0', NULL, 'Approved', '2026-06-15 12:09:45');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `bug_reports`
+--
+
+DROP TABLE IF EXISTS `bug_reports`;
+CREATE TABLE `bug_reports` (
+  `id` char(36) NOT NULL,
+  `project_id` char(36) DEFAULT NULL,
+  `task_id` char(36) DEFAULT NULL COMMENT 'Opsional: terkait task di Kanban',
+  `reporter_id` char(36) DEFAULT NULL COMMENT 'User yang melaporkan',
+  `judul` varchar(200) NOT NULL,
+  `deskripsi` text NOT NULL,
+  `langkah` text DEFAULT NULL COMMENT 'Langkah reproduksi',
+  `prioritas` enum('Low','Medium','High','Critical') NOT NULL DEFAULT 'Medium',
+  `status` enum('Open','In Progress','Resolved','Closed') NOT NULL DEFAULT 'Open',
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `bug_reports`
+--
+
+INSERT INTO `bug_reports` (`id`, `project_id`, `task_id`, `reporter_id`, `judul`, `deskripsi`, `langkah`, `prioritas`, `status`, `created_at`, `updated_at`) VALUES
+('1571d3f1-ff6a-478a-ae7c-29e5003a86dc', '633f7dce-d5f1-46fc-8cdd-50289cd86471', NULL, 'd530beb7-5d28-4988-bfc2-e54b582fade6', 'menakutkan', 'ada serangga', '1. duar', 'Medium', 'Open', '2026-06-15 18:55:50', '2026-06-15 18:55:50');
 
 -- --------------------------------------------------------
 
@@ -209,6 +237,15 @@ ALTER TABLE `assets`
   ADD KEY `uploader_id` (`uploader_id`);
 
 --
+-- Indexes for table `bug_reports`
+--
+ALTER TABLE `bug_reports`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `project_id` (`project_id`),
+  ADD KEY `task_id` (`task_id`),
+  ADD KEY `reporter_id` (`reporter_id`);
+
+--
 -- Indexes for table `devlogs`
 --
 ALTER TABLE `devlogs`
@@ -266,6 +303,14 @@ ALTER TABLE `users`
 ALTER TABLE `assets`
   ADD CONSTRAINT `assets_ibfk_1` FOREIGN KEY (`project_id`) REFERENCES `projects` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `assets_ibfk_2` FOREIGN KEY (`uploader_id`) REFERENCES `users` (`id`) ON DELETE SET NULL;
+
+--
+-- Constraints for table `bug_reports`
+--
+ALTER TABLE `bug_reports`
+  ADD CONSTRAINT `bug_reports_ibfk_proj` FOREIGN KEY (`project_id`) REFERENCES `projects` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `bug_reports_ibfk_task` FOREIGN KEY (`task_id`) REFERENCES `tasks` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `bug_reports_ibfk_user` FOREIGN KEY (`reporter_id`) REFERENCES `users` (`id`) ON DELETE SET NULL;
 
 --
 -- Constraints for table `devlogs`

@@ -105,7 +105,6 @@ function redirect_if_logged_in(): void {
  * @param array $user Row dari tabel users
  */
 function create_user_session(array $user): void {
-    // Regenerate session ID untuk mencegah session fixation
     session_regenerate_id(true);
 
     $_SESSION['user_id']         = $user['id'];

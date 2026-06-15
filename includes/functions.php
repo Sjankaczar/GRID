@@ -16,7 +16,7 @@ function redirect(string $url): void {
 }
 
 /**
- * Set flash message ke session (tampil sekali, lalu hilang).
+ * Set flash message ke session.
  *
  * @param string $type  'success' | 'error' | 'warning' | 'info'
  * @param string $message

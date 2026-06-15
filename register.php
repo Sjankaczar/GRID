@@ -9,7 +9,6 @@ require_once 'includes/functions.php';
 
 redirect_if_logged_in();
 
-// Ambil daftar organisasi untuk combobox Member
 $all_orgs = [];
 try {
     $stmt_orgs = $pdo->query('SELECT nama, kode_unik FROM organizations ORDER BY nama ASC');
@@ -78,15 +77,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $is_admin = ($role_pilihan === 'Admin');
 
         if ($is_admin) {
-            // Admin: wajib isi nama organisasi baru yang akan dibuat
             if (empty($nama_organisasi)) {
                 $errors[] = 'Nama organisasi wajib diisi untuk akun Admin.';
             } elseif (mb_strlen($nama_organisasi) > 100) {
                 $errors[] = 'Nama organisasi maksimal 100 karakter.';
             }
-            // Kode unik akan digenerate otomatis dari nama
         } else {
-            // Member: wajib isi kode organisasi yang sudah ada
             if (empty($kode_organisasi)) {
                 $errors[] = 'Kode organisasi wajib diisi. Minta kode ini kepada Admin studio kamu.';
             } elseif (!preg_match('/^[A-Z0-9_]{3,20}$/', $kode_organisasi)) {
@@ -119,12 +115,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $password_hash = password_hash($password, PASSWORD_BCRYPT);
 
             if ($is_admin) {
-                // Buat organisasi baru
                 $org_id      = generateUUID();
                 $kode_gen    = strtoupper(preg_replace('/[^A-Z0-9]/', '', strtoupper($nama_organisasi)));
-                $kode_gen    = substr($kode_gen, 0, 12); // max 12 char dari nama
+                $kode_gen    = substr($kode_gen, 0, 12); 
 
-                // Pastikan kode unik (tambah angka random jika bentrok)
                 $kode_final = $kode_gen;
                 $cek = $pdo->prepare('SELECT id FROM organizations WHERE kode_unik = ? LIMIT 1');
                 $cek->execute([$kode_final]);
@@ -271,7 +265,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     placeholder="Ulangi password" required>
             </div>
 
-            <!-- Field untuk Admin: nama organisasi baru -->
+            <!-- Field untuk Admin -->
             <div id="field-admin" class="mb-4" style="display:<?= (($old['role_pilihan'] ?? 'Member') === 'Admin') ? 'block' : 'none' ?>;">
                 <label for="nama_organisasi" class="form-label">
                     <i class="fa fa-building me-1 text-warning"></i>Nama Studio / Organisasi
@@ -283,13 +277,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <div class="form-text">Kode unik organisasi akan dibuat otomatis dari nama ini dan ditampilkan setelah registrasi.</div>
             </div>
 
-            <!-- Field untuk Member: combobox organisasi (dropdown + bisa ketik) -->
+            <!-- Field untuk Member -->
             <div id="field-member" class="mb-4" style="display:<?= (($old['role_pilihan'] ?? 'Member') !== 'Admin') ? 'block' : 'none' ?>;">
                 <label for="kode_organisasi" class="form-label">
                     <i class="fa fa-building me-1 text-info"></i>Organisasi
                     <span class="text-danger">*</span>
                 </label>
-                <!-- Pilih dari dropdown atau ketik kode langsung -->
                 <div class="position-relative">
                     <input
                         type="text"
@@ -348,14 +341,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             cardMember.style.borderColor = borderColor;
             fieldAdmin.style.display  = 'block';
             fieldMember.style.display = 'none';
-            // kosongkan field member
             document.getElementById('kode_organisasi').value = '';
         } else {
             cardMember.style.borderColor = accentColor;
             cardAdmin.style.borderColor  = borderColor;
             fieldMember.style.display = 'block';
             fieldAdmin.style.display  = 'none';
-            // kosongkan field admin
             document.getElementById('nama_organisasi').value = '';
         }
     }
@@ -376,7 +367,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     });
 
-    // Auto uppercase kode organisasi
     var kodeInput = document.getElementById('kode_organisasi');
     if (kodeInput) {
         kodeInput.addEventListener('input', function() {

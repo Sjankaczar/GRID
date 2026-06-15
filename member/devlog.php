@@ -284,10 +284,9 @@ document.addEventListener("DOMContentLoaded", function() {
     var editor = document.getElementById("devlog-editor");
     var hidden = document.getElementById("konten-hidden");
 
-    // Saat form submit: copy innerHTML editor ke hidden input
     form.addEventListener("submit", function(e) {
         var content = editor.innerHTML.trim();
-        // Anggap kosong jika hanya berisi <br> atau whitespace
+
         if (!content || content === "<br>") {
             e.preventDefault();
             alert("Konten devlog tidak boleh kosong.");
@@ -297,7 +296,6 @@ document.addEventListener("DOMContentLoaded", function() {
         hidden.value = content;
     });
 
-    // Paste sebagai plain text (cegah format aneh dari clipboard)
     editor.addEventListener("paste", function(e) {
         e.preventDefault();
         var text = (e.clipboardData || window.clipboardData).getData("text/plain");

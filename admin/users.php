@@ -93,28 +93,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 // AMBIL DATA USER
-$view = $_GET['view'] ?? 'list';
-$users = [];
+$view          = $_GET['view'] ?? 'list';
+$users         = [];
 $pending_count = 0;
+$admin_org_id  = $_SESSION['organization_id'] ?? null;
 
 try {
     if ($view === 'pending') {
-        $stmt = $pdo->query('
+        $stmt = $pdo->prepare('
             SELECT id, username, nama_lengkap, email, role, created_at
             FROM users
-            WHERE is_active = FALSE
+            WHERE is_active = FALSE AND organization_id = ?
             ORDER BY created_at DESC
         ');
+        $stmt->execute([$admin_org_id]);
         $users = $stmt->fetchAll();
         $pending_count = count($users);
     } else {
-        $stmt = $pdo->query('
+        $stmt = $pdo->prepare('
             SELECT id, username, nama_lengkap, email, role, is_active, created_at
             FROM users
+            WHERE organization_id = ?
             ORDER BY nama_lengkap ASC
         ');
+        $stmt->execute([$admin_org_id]);
         $users = $stmt->fetchAll();
-        $pending_count = (int) $pdo->query('SELECT COUNT(*) FROM users WHERE is_active = FALSE')->fetchColumn();
+        
+        $stmt_count = $pdo->prepare('SELECT COUNT(*) FROM users WHERE is_active = FALSE AND organization_id = ?');
+        $stmt_count->execute([$admin_org_id]);
+        $pending_count = (int) $stmt_count->fetchColumn();
     }
 } catch (PDOException $e) {
     error_log($e->getMessage());

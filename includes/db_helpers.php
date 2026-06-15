@@ -109,7 +109,7 @@ function get_project_members(PDO $pdo, string $project_id): array {
 }
  
 /**
- * Ambil daftar user aktif yang BELUM menjadi anggota proyek tertentu.
+ * Ambil daftar user aktif yang belum menjadi anggota proyek tertentu.
  */
 function get_non_project_members(PDO $pdo, string $project_id): array {
     $stmt = $pdo->prepare('
@@ -159,7 +159,7 @@ function get_user_projects(PDO $pdo, string $user_id): array {
 // ASSETS
  
 /**
- * Ambil aset dengan filter opsional (status, kategori, project_id).
+ * Ambil aset dengan filter.
  */
 function get_assets_filtered(
     PDO $pdo,
@@ -296,7 +296,7 @@ function get_pending_assets_count(PDO $pdo): int {
 // DEVLOGS
  
 /**
- * Ambil semua devlog (opsional filter by penulis_id).
+ * Ambil semua devlog.
  */
 function get_devlogs(PDO $pdo, ?string $user_id = null): array {
     $sql    = '
@@ -323,7 +323,7 @@ function get_devlogs(PDO $pdo, ?string $user_id = null): array {
 }
  
 /**
- * Ambil satu devlog by ID, dengan cek kepemilikan opsional.
+ * Ambil satu devlog by ID.
  */
 function get_devlog_by_id(PDO $pdo, string $id, ?string $owner_id = null): ?array {
     $sql    = '
@@ -336,16 +336,175 @@ function get_devlog_by_id(PDO $pdo, string $id, ?string $owner_id = null): ?arra
         WHERE d.id = ?
     ';
     $params = [$id];
- 
+
     if ($owner_id !== null) {
         $sql .= ' AND d.penulis_id = ?';
         $params[] = $owner_id;
     }
- 
+
     $sql .= ' LIMIT 1';
- 
+
     $stmt = $pdo->prepare($sql);
     $stmt->execute($params);
     $row = $stmt->fetch();
     return $row ?: null;
+}
+
+
+// TASKS (KANBAN)
+
+/**
+ * Ambil semua task dalam sebuah proyek, dikelompokkan untuk Kanban.
+ */
+function get_tasks_by_project(PDO $pdo, string $project_id): array {
+    $stmt = $pdo->prepare('
+        SELECT t.*,
+               u.nama_lengkap AS assignee_name,
+               u.avatar_url   AS assignee_avatar
+        FROM tasks t
+        LEFT JOIN users u ON t.assignee_id = u.id
+        WHERE t.project_id = ?
+        ORDER BY
+            FIELD(t.prioritas, "Critical","High","Medium","Low"),
+            t.deadline ASC
+    ');
+    $stmt->execute([$project_id]);
+    return $stmt->fetchAll();
+}
+
+/**
+ * Ambil satu task by ID.
+ */
+function get_task_by_id(PDO $pdo, string $id): ?array {
+    $stmt = $pdo->prepare('
+        SELECT t.*,
+               u.nama_lengkap AS assignee_name
+        FROM tasks t
+        LEFT JOIN users u ON t.assignee_id = u.id
+        WHERE t.id = ?
+        LIMIT 1
+    ');
+    $stmt->execute([$id]);
+    $row = $stmt->fetch();
+    return $row ?: null;
+}
+
+/**
+ * Hitung total jam estimasi tugas yang sudah "Done" pada suatu proyek.
+ */
+function get_project_done_hours(PDO $pdo, string $project_id): int {
+    $stmt = $pdo->prepare('
+        SELECT COALESCE(SUM(estimasi_jam), 0)
+        FROM tasks
+        WHERE project_id = ? AND status_kolom = "Done"
+    ');
+    $stmt->execute([$project_id]);
+    return (int) $stmt->fetchColumn();
+}
+
+/**
+ * Hitung ringkasan task per status untuk suatu proyek.
+ */
+function get_task_summary_by_project(PDO $pdo, string $project_id): array {
+    $stmt = $pdo->prepare('
+        SELECT status_kolom, COUNT(*) AS total
+        FROM tasks
+        WHERE project_id = ?
+        GROUP BY status_kolom
+    ');
+    $stmt->execute([$project_id]);
+    $rows = $stmt->fetchAll();
+
+    $map = ['To Do' => 0, 'In Progress' => 0, 'Review' => 0, 'Done' => 0];
+    foreach ($rows as $row) {
+        $map[$row['status_kolom']] = (int) $row['total'];
+    }
+    return $map;
+}
+
+
+// BUG REPORTS
+
+/**
+ * Ambil semua bug report dalam sebuah proyek.
+ */
+function get_bugs_by_project(PDO $pdo, string $project_id): array {
+    $stmt = $pdo->prepare('
+        SELECT b.*,
+               u.nama_lengkap AS reporter_name,
+               t.judul        AS task_judul
+        FROM bug_reports b
+        LEFT JOIN users u ON b.reporter_id = u.id
+        LEFT JOIN tasks t ON b.task_id     = t.id
+        WHERE b.project_id = ?
+        ORDER BY
+            FIELD(b.prioritas, "Critical","High","Medium","Low"),
+            b.created_at DESC
+    ');
+    $stmt->execute([$project_id]);
+    return $stmt->fetchAll();
+}
+
+/**
+ * Ambil satu bug report by ID.
+ */
+function get_bug_by_id(PDO $pdo, string $id): ?array {
+    $stmt = $pdo->prepare('
+        SELECT b.*,
+               u.nama_lengkap AS reporter_name,
+               t.judul        AS task_judul,
+               p.nama_game    AS project_name
+        FROM bug_reports b
+        LEFT JOIN users    u ON b.reporter_id = u.id
+        LEFT JOIN tasks    t ON b.task_id     = t.id
+        LEFT JOIN projects p ON b.project_id  = p.id
+        WHERE b.id = ?
+        LIMIT 1
+    ');
+    $stmt->execute([$id]);
+    $row = $stmt->fetch();
+    return $row ?: null;
+}
+
+/**
+ * Hitung ringkasan bug per status untuk suatu proyek.
+ */
+function get_bug_summary_by_project(PDO $pdo, string $project_id): array {
+    $stmt = $pdo->prepare('
+        SELECT status, COUNT(*) AS total
+        FROM bug_reports
+        WHERE project_id = ?
+        GROUP BY status
+    ');
+    $stmt->execute([$project_id]);
+    $rows = $stmt->fetchAll();
+
+    $map = ['Open' => 0, 'In Progress' => 0, 'Resolved' => 0, 'Closed' => 0];
+    foreach ($rows as $row) {
+        $map[$row['status']] = (int) $row['total'];
+    }
+    return $map;
+}
+
+
+// REPORTS / STATISTIK
+
+/**
+ * Ambil data lengkap satu proyek untuk generate laporan.
+ */
+function get_project_report_data(PDO $pdo, string $project_id): ?array {
+    $project = get_project_by_id($pdo, $project_id);
+    if (!$project) return null;
+
+    $project['task_summary']    = get_task_summary_by_project($pdo, $project_id);
+    $project['bug_summary']     = get_bug_summary_by_project($pdo, $project_id);
+    $project['members']         = get_project_members($pdo, $project_id);
+    $project['total_tasks']     = array_sum($project['task_summary']);
+    $project['done_hours']      = get_project_done_hours($pdo, $project_id);
+
+    $project['completion_pct']  = $project['total_tasks'] > 0
+        ? round(($project['task_summary']['Done'] / $project['total_tasks']) * 100)
+        : 0;
+
+    return $project;
 }

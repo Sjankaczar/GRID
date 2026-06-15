@@ -17,19 +17,46 @@ $stats = ['total_projects' => 0,
           'total_assets' => 0, 
           'total_devlogs' => 0];
 
-try {
-    $stats['total_projects']    = (int) $pdo->query('SELECT COUNT(*) FROM projects')->fetchColumn();
-    $stats['total_users']       = (int) $pdo->query('SELECT COUNT(*) FROM users WHERE is_active = TRUE AND role != "Guest"')->fetchColumn();
-    $stats['pending_approvals'] = get_pending_assets_count($pdo);
-    $stats['total_assets']      = (int) $pdo->query('SELECT COUNT(*) FROM assets')->fetchColumn();
-    $stats['total_devlogs']     = (int) $pdo->query('SELECT COUNT(*) FROM devlogs WHERE status = "Published"')->fetchColumn();
+$admin_org_id = $_SESSION['organization_id'] ?? null;
 
-    // Aset pending terbaru (5 item)
-    $recent_pending = get_assets_filtered($pdo, 'Pending');
+try {
+    // Total proyek dalam organisasi
+    $stmt_proj = $pdo->prepare('SELECT COUNT(*) FROM projects WHERE organization_id = ?');
+    $stmt_proj->execute([$admin_org_id]);
+    $stats['total_projects'] = (int) $stmt_proj->fetchColumn();
+
+    // Total user aktif dalam organisasi
+    $stmt_user = $pdo->prepare('SELECT COUNT(*) FROM users WHERE is_active = TRUE AND role != "Guest" AND organization_id = ?');
+    $stmt_user->execute([$admin_org_id]);
+    $stats['total_users'] = (int) $stmt_user->fetchColumn();
+
+    // Pending aset count
+    $stats['pending_approvals'] = get_pending_assets_count_by_org($pdo, $admin_org_id);
+
+    // Total aset dalam organisasi
+    $stmt_asset = $pdo->prepare('
+        SELECT COUNT(*) FROM assets a
+        LEFT JOIN projects p ON a.project_id = p.id
+        WHERE p.organization_id = ?
+    ');
+    $stmt_asset->execute([$admin_org_id]);
+    $stats['total_assets'] = (int) $stmt_asset->fetchColumn();
+
+    // Total devlog dalam organisasi
+    $stmt_devlog = $pdo->prepare('
+        SELECT COUNT(*) FROM devlogs d
+        LEFT JOIN projects p ON d.project_id = p.id
+        WHERE d.status = "Published" AND p.organization_id = ?
+    ');
+    $stmt_devlog->execute([$admin_org_id]);
+    $stats['total_devlogs'] = (int) $stmt_devlog->fetchColumn();
+
+    // Aset pending terbaru
+    $recent_pending = get_assets_filtered_by_org($pdo, $admin_org_id, 'Pending');
     $recent_pending = array_slice($recent_pending, 0, 5);
 
     // Proyek terbaru
-    $all_projects = get_all_projects($pdo);
+    $all_projects = get_all_projects_by_org($pdo, $admin_org_id);
     $recent_projects = array_slice($all_projects, 0, 5);
 } catch (PDOException $ex) {
     error_log($ex->getMessage());
@@ -37,7 +64,7 @@ try {
     $recent_projects = [];
 }
 
-// Akun menunggu aktivasi (hanya dalam organisasi admin yang login)
+// Akun menunggu aktivasi
 $pending_users = [];
 $admin_org_id  = $_SESSION['organization_id'] ?? null;
 try {

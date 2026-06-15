@@ -35,7 +35,7 @@ try {
     $stmt->execute([$user_id]);
     $stats['assets_pending'] = (int) $stmt->fetchColumn();
 
-    // Tugas saya (Kanban) yang belum selesai
+    // Tugas saya yang belum selesai
     $stmt = $pdo->prepare('SELECT COUNT(*) FROM tasks WHERE assignee_id = ? AND status_kolom != "Done"');
     $stmt->execute([$user_id]);
     $stats['my_tasks'] = (int) $stmt->fetchColumn();

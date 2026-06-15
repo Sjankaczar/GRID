@@ -132,7 +132,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
  
 // TENTUKAN VIEW
-// Scope semua data ke organisasi admin yang login
 $view         = $_GET['view'] ?? 'list';
 $edit_id      = $_GET['id']   ?? null;
 $project      = null;

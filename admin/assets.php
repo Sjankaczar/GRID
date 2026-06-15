@@ -194,7 +194,6 @@ include '../templates/admin_header.php';
 <?php $extra_js = '
 <script>
 document.addEventListener("DOMContentLoaded", function() {
-    // Referensi Elemen DOM
     const filterStatus = document.getElementById("filterStatus");
     const filterKategori = document.getElementById("filterKategori");
     const searchInput = document.getElementById("searchInput");
@@ -202,7 +201,7 @@ document.addEventListener("DOMContentLoaded", function() {
     const assetCount = document.getElementById("assetCount");
     const noAssetFound = document.getElementById("noAssetFound");
 
-    // Fungsi Utama Filter (DOM Manipulation Langsung)
+    // Fungsi Utama 
     function applyFilters() {
         const statusVal = filterStatus.value;
         const kategoriVal = filterKategori.value;
@@ -214,12 +213,10 @@ document.addEventListener("DOMContentLoaded", function() {
             const itemKategori = item.getAttribute("data-kategori");
             const itemNama = item.getAttribute("data-nama");
 
-            // Cek kondisi filter
             const matchStatus = statusVal === "all" || itemStatus === statusVal;
             const matchKategori = kategoriVal === "all" || itemKategori === kategoriVal;
             const matchSearch = searchVal === "" || itemNama.includes(searchVal);
 
-            // Terapkan perubahan pada DOM
             if (matchStatus && matchKategori && matchSearch) {
                 item.style.display = "block";
                 setTimeout(() => item.style.opacity = "1", 10);
@@ -241,7 +238,7 @@ document.addEventListener("DOMContentLoaded", function() {
         }
     }
 
-    // Event Listener (Tanpa reload halaman)
+    // Event Listener 
     filterStatus.addEventListener("change", applyFilters);
     filterKategori.addEventListener("change", applyFilters);
     searchInput.addEventListener("input", applyFilters); // "input" agar berjalan real-time saat mengetik

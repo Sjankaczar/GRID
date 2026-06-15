@@ -11,7 +11,7 @@ require_role([ROLE_MEMBER, ROLE_ADMIN]);
 
 $user_id = current_user_id();
 
-// Ambil proyek yang diikuti user ini (via project_members)
+// Ambil proyek yang diikuti user ini
 $my_projects = [];
 try {
     $stmt = $pdo->prepare('
