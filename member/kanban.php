@@ -49,7 +49,14 @@ if ($selected_project_id) {
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     csrf_verify();
 
+    $is_ajax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
+
     if (!rate_limit_check('kanban_action', 30, 60)) {
+        if ($is_ajax) {
+            header('Content-Type: application/json');
+            echo json_encode(['success' => false, 'error' => 'Rate limit']);
+            exit;
+        }
         set_flash('error', 'Terlalu banyak aksi dalam satu menit. Tunggu sebentar.');
         redirect(APP_URL . '/member/kanban.php?project_id=' . urlencode($selected_project_id));
     }
@@ -148,12 +155,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $allowed    = ['To Do', 'In Progress', 'Review', 'Done'];
 
         if (!in_array($new_status, $allowed, true)) {
+            if ($is_ajax) { header('Content-Type: application/json'); echo json_encode(['success' => false, 'error' => 'Invalid status']); exit; }
             set_flash('error', 'Status kolom tidak valid.');
             redirect(APP_URL . '/member/kanban.php?project_id=' . urlencode($project_id));
         }
 
         $task = get_task_by_id($pdo, $task_id);
         if (!$task || $task['project_id'] !== $project_id) {
+            if ($is_ajax) { header('Content-Type: application/json'); echo json_encode(['success' => false, 'error' => 'Not found']); exit; }
             set_flash('error', 'Tugas tidak ditemukan.');
             redirect(APP_URL . '/member/kanban.php?project_id=' . urlencode($project_id));
         }
@@ -161,9 +170,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt = $pdo->prepare('UPDATE tasks SET status_kolom = ? WHERE id = ?');
         $stmt->execute([$new_status, $task_id]);
 
-        if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
+        if ($is_ajax) {
+            $new_token = bin2hex(random_bytes(32));
+            $_SESSION['csrf_token'] = $new_token;
             header('Content-Type: application/json');
-            echo json_encode(['success' => true, 'new_status' => $new_status]);
+            echo json_encode(['success' => true, 'new_status' => $new_status, 'csrf_token' => $new_token]);
             exit;
         }
 
@@ -289,7 +300,7 @@ include '../templates/member_header.php';
                 </div>
                 <div class="card-body p-2 kanban-column" data-column="<?= e($col_name) ?>">
                     <?php foreach ($col_tasks as $task): ?>
-                    <div class="card mb-2 task-card" data-task-id="<?= e($task['id']) ?>">
+                    <div class="card mb-2 task-card" data-task-id="<?= e($task['id']) ?>" draggable="true">
                         <div class="card-body py-2 px-3">
                             <div class="d-flex align-items-start justify-content-between gap-1">
                                 <span class="fw-semibold small"><?= e($task['judul']) ?></span>
@@ -368,11 +379,11 @@ include '../templates/member_header.php';
                     </div>
                     <?php endforeach; ?>
 
-                    <?php if (empty($col_tasks)): ?>
-                    <div class="text-center text-muted py-4" style="font-size:0.8rem;">
+                    
+                    <div class="text-center text-muted py-4 empty-placeholder" style="font-size:0.8rem; display: <?= empty($col_tasks) ? 'block' : 'none' ?>;">
                         <i class="fa fa-inbox fa-2x mb-2 d-block opacity-25"></i>Tidak ada tugas
                     </div>
-                    <?php endif; ?>
+                    
                 </div>
             </div>
         </div>
@@ -505,6 +516,32 @@ include '../templates/member_header.php';
     </div>
 </div>
 
+<style>
+/* Drag and Drop Visual Feedback */
+.task-card {
+    cursor: grab;
+    transition: box-shadow 0.2s, opacity 0.2s, transform 0.2s;
+}
+.task-card:active {
+    cursor: grabbing;
+}
+.task-card.dragging {
+    opacity: 0.5;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+    transform: scale(0.98);
+}
+.kanban-column {
+    min-height: 150px;
+    transition: background-color 0.2s, border 0.2s;
+    border-radius: 6px;
+    border: 2px dashed transparent;
+}
+.kanban-column.drag-over {
+    background-color: rgba(79, 124, 255, 0.05);
+    border-color: var(--accent-blue, #4f7cff);
+}
+</style>
+
 <script>
 document.querySelectorAll('.btn-edit-task').forEach(function(btn) {
     btn.addEventListener('click', function() {
@@ -517,6 +554,134 @@ document.querySelectorAll('.btn-edit-task').forEach(function(btn) {
         document.getElementById('edit_estimasi').value  = this.dataset.estimasi;
     });
 });
+
+// Drag and Drop Logic
+document.addEventListener('DOMContentLoaded', () => {
+    const cards = document.querySelectorAll('.task-card');
+    const columns = document.querySelectorAll('.kanban-column');
+
+    let draggedCard = null;
+
+    cards.forEach(card => {
+        card.addEventListener('dragstart', (e) => {
+            draggedCard = card;
+            setTimeout(() => card.classList.add('dragging'), 0);
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/plain', card.dataset.taskId);
+        });
+
+        card.addEventListener('dragend', () => {
+            if (draggedCard) {
+                draggedCard.classList.remove('dragging');
+                draggedCard = null;
+            }
+            columns.forEach(col => col.classList.remove('drag-over'));
+            updateColumnBadges();
+        });
+    });
+
+    columns.forEach(col => {
+        col.addEventListener('dragover', (e) => {
+            e.preventDefault(); // Wajib agar event drop bisa ditangkap
+            col.classList.add('drag-over');
+            
+            const afterElement = getDragAfterElement(col, e.clientY);
+            if (afterElement == null) {
+                col.appendChild(draggedCard);
+            } else {
+                col.insertBefore(draggedCard, afterElement);
+            }
+        });
+
+        col.addEventListener('dragenter', (e) => {
+            e.preventDefault();
+        });
+
+        col.addEventListener('dragleave', (e) => {
+            if (!col.contains(e.relatedTarget)) {
+                col.classList.remove('drag-over');
+            }
+        });
+
+        col.addEventListener('drop', (e) => {
+            e.preventDefault();
+            col.classList.remove('drag-over');
+            if (!draggedCard) return;
+
+            const taskId = draggedCard.dataset.taskId;
+            const newStatus = col.dataset.column;
+            
+            // Ambil token CSRF dari input tersembunyi yang ada di halaman
+            const csrfToken = document.querySelector('input[name="csrf_token"]').value;
+
+            // Buat form data untuk request
+            const formData = new FormData();
+            formData.append('action', 'move');
+            formData.append('task_id', taskId);
+            formData.append('new_status', newStatus);
+            formData.append('project_id', '<?= e($selected_project_id ?? "") ?>');
+            formData.append('csrf_token', csrfToken);
+
+            fetch('kanban.php?project_id=<?= urlencode($selected_project_id ?? "") ?>', {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Perbarui semua input CSRF di halaman dengan token baru
+                    if (data.csrf_token) {
+                        document.querySelectorAll('input[name="csrf_token"]').forEach(el => {
+                            el.value = data.csrf_token;
+                        });
+                    }
+                    updateColumnBadges();
+                } else {
+                    alert('Gagal memindahkan tugas: ' + (data.error || ''));
+                    window.location.reload();
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Terjadi kesalahan jaringan.');
+                window.location.reload();
+            });
+        });
+    });
+
+    function getDragAfterElement(container, y) {
+        const draggableElements = [...container.querySelectorAll('.task-card:not(.dragging)')];
+
+        return draggableElements.reduce((closest, child) => {
+            const box = child.getBoundingClientRect();
+            const offset = y - box.top - box.height / 2;
+            if (offset < 0 && offset > closest.offset) {
+                return { offset: offset, element: child };
+            } else {
+                return closest;
+            }
+        }, { offset: Number.NEGATIVE_INFINITY }).element;
+    }
+
+    function updateColumnBadges() {
+        columns.forEach(col => {
+            const count = col.querySelectorAll('.task-card').length;
+            const header = col.previousElementSibling;
+            if (header) {
+                const badge = header.querySelector('.badge');
+                if (badge) badge.textContent = count;
+            }
+            const emptyPlaceholder = col.querySelector('.empty-placeholder');
+            if (emptyPlaceholder) {
+                emptyPlaceholder.style.display = count === 0 ? 'block' : 'none';
+            }
+        });
+    }
+});
 </script>
 
 <?php include '../templates/member_footer.php'; ?>
+
