@@ -16,6 +16,65 @@ function get_all_projects(PDO $pdo): array {
     ');
     return $stmt->fetchAll();
 }
+
+/**
+ * Ambil proyek yang ter-scope ke satu organisasi tertentu.
+ */
+function get_all_projects_by_org(PDO $pdo, ?string $org_id): array {
+    if ($org_id === null) return get_all_projects($pdo);
+
+    $stmt = $pdo->prepare('
+        SELECT p.*,
+               u.nama_lengkap AS lead_name,
+               (SELECT COUNT(*) FROM project_members pm WHERE pm.project_id = p.id) AS total_members
+        FROM projects p
+        LEFT JOIN users u ON p.lead_id = u.id
+        WHERE p.organization_id = ?
+        ORDER BY p.nama_game ASC
+    ');
+    $stmt->execute([$org_id]);
+    return $stmt->fetchAll();
+}
+
+/**
+ * Ambil semua user aktif (non-Guest) dalam satu organisasi untuk dropdown.
+ */
+function get_active_users_by_org(PDO $pdo, ?string $org_id): array {
+    if ($org_id === null) return get_all_active_users($pdo);
+
+    $stmt = $pdo->prepare('
+        SELECT id, username, nama_lengkap, role
+        FROM users
+        WHERE is_active = TRUE
+          AND role != ?
+          AND organization_id = ?
+        ORDER BY nama_lengkap ASC
+    ');
+    $stmt->execute([ROLE_GUEST, $org_id]);
+    return $stmt->fetchAll();
+}
+
+/**
+ * Ambil user aktif yang BELUM menjadi anggota proyek, dibatasi ke organisasi tertentu.
+ */
+function get_non_project_members_by_org(PDO $pdo, string $project_id, ?string $org_id): array {
+    if ($org_id === null) return get_non_project_members($pdo, $project_id);
+
+    $stmt = $pdo->prepare('
+        SELECT id, username, nama_lengkap, role
+        FROM users
+        WHERE is_active = TRUE
+          AND role != ?
+          AND organization_id = ?
+          AND id NOT IN (
+              SELECT user_id FROM project_members WHERE project_id = ?
+          )
+        ORDER BY nama_lengkap ASC
+    ');
+    $stmt->execute([ROLE_GUEST, $org_id, $project_id]);
+    return $stmt->fetchAll();
+}
+
  
 /**
  * Ambil satu proyek by ID termasuk nama lead.
@@ -138,6 +197,62 @@ function get_assets_filtered(
     $stmt->execute($params);
     return $stmt->fetchAll();
 }
+
+/**
+ * Ambil aset yang ter-scope ke satu organisasi (via project.organization_id).
+ */
+function get_assets_filtered_by_org(
+    PDO $pdo,
+    ?string $org_id,
+    ?string $status   = null,
+    ?string $kategori = null
+): array {
+    if ($org_id === null) return get_assets_filtered($pdo, $status, $kategori);
+
+    $sql    = '
+        SELECT a.*,
+               u.nama_lengkap AS uploader_name,
+               p.nama_game    AS project_name
+        FROM assets a
+        LEFT JOIN users    u ON a.uploader_id = u.id
+        LEFT JOIN projects p ON a.project_id  = p.id
+        WHERE p.organization_id = ?
+    ';
+    $params = [$org_id];
+
+    if ($status !== null) {
+        $sql .= ' AND a.status = ?';
+        $params[] = $status;
+    }
+    if ($kategori !== null) {
+        $sql .= ' AND a.kategori = ?';
+        $params[] = $kategori;
+    }
+
+    $sql .= ' ORDER BY a.created_at DESC';
+
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute($params);
+    return $stmt->fetchAll();
+}
+
+/**
+ * Hitung aset Pending yang ter-scope ke organisasi tertentu.
+ */
+function get_pending_assets_count_by_org(PDO $pdo, ?string $org_id): int {
+    if ($org_id === null) return get_pending_assets_count($pdo);
+
+    $stmt = $pdo->prepare('
+        SELECT COUNT(*)
+        FROM assets a
+        LEFT JOIN projects p ON a.project_id = p.id
+        WHERE a.status = "Pending"
+          AND p.organization_id = ?
+    ');
+    $stmt->execute([$org_id]);
+    return (int) $stmt->fetchColumn();
+}
+
  
 /**
  * Ambil satu aset by ID beserta info uploader dan proyek.

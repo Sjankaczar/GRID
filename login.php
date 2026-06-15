@@ -39,7 +39,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } else {
             // Cari User Berdasarkan Username atau Email
             $stmt = $pdo->prepare('
-                SELECT id, username, nama_lengkap, email, password_hash, role, avatar_url, is_active
+                SELECT id, username, nama_lengkap, email, password_hash, role, avatar_url, is_active, organization_id
                 FROM users
                 WHERE username = ? OR email = ?
                 LIMIT 1

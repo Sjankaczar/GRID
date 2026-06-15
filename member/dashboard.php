@@ -106,13 +106,19 @@ include '../templates/member_header.php';
             <div class="card-body">
                 <h6 class="card-title mb-3">Jalan Pintas</h6>
                 <div class="d-flex flex-wrap gap-2">
-                    <a href="upload_aset.php" class="btn btn-sm btn-outline-info">
+                    <a href="my_projects.php" class="btn btn-sm btn-outline-primary">
+                        <i class="fa fa-gamepad me-1"></i>Proyek Saya
+                    </a>
+                    <a href="my_assets.php" class="btn btn-sm btn-outline-info">
+                        <i class="fa fa-image me-1"></i>Aset Saya
+                    </a>
+                    <a href="upload_aset.php" class="btn btn-sm btn-outline-secondary">
                         <i class="fa fa-upload me-1"></i>Upload Aset Baru
                     </a>
                     <a href="kanban.php" class="btn btn-sm btn-outline-success">
                         <i class="fa fa-trello me-1"></i>Buka Kanban
                     </a>
-                    <a href="devlog.php" class="btn btn-sm btn-outline-primary">
+                    <a href="devlog.php" class="btn btn-sm btn-outline-warning">
                         <i class="fa fa-feather me-1"></i>Tulis Devlog
                     </a>
                 </div>
@@ -120,5 +126,21 @@ include '../templates/member_header.php';
         </div>
     </div>
 </div>
+
+<!-- Aset Pending (Notifikasi) -->
+<?php if ($stats['assets_pending'] > 0): ?>
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="alert alert-warning d-flex align-items-center gap-3 mb-0" role="alert">
+            <i class="fa fa-hourglass-half fa-lg"></i>
+            <div>
+                Kamu memiliki <strong><?= $stats['assets_pending'] ?></strong> aset yang sedang menunggu review Admin.
+                <a href="my_assets.php?status=Pending" class="alert-link ms-1">Lihat detail →</a>
+            </div>
+        </div>
+    </div>
+</div>
+<?php endif; ?>
+
 
 <?php include '../templates/member_footer.php'; ?>

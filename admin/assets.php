@@ -37,10 +37,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     redirect(APP_URL . '/admin/assets.php' . ($qs ? '?' . $qs : ''));
 }
  
-// Kita ambil semua aset agar filter dilakukan sepenuhnya di sisi klien (Vanilla JS)
-$assets           = get_assets_filtered($pdo, null, null);
-$pending_count    = get_pending_assets_count($pdo);
-$all_projects     = get_all_projects($pdo);
+// Ambil aset yang di-scope ke organisasi admin yang sedang login
+$admin_org_id     = $_SESSION['organization_id'] ?? null;
+$assets           = get_assets_filtered_by_org($pdo, $admin_org_id, null, null);
+$pending_count    = get_pending_assets_count_by_org($pdo, $admin_org_id);
+$all_projects     = get_all_projects_by_org($pdo, $admin_org_id);
  
 // RENDER
 $page_title  = 'Manajemen Aset';

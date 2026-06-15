@@ -37,12 +37,32 @@ try {
     $recent_projects = [];
 }
 
-// Akun menunggu aktivasi
+// Akun menunggu aktivasi (hanya dalam organisasi admin yang login)
 $pending_users = [];
+$admin_org_id  = $_SESSION['organization_id'] ?? null;
 try {
-    $stmt = $pdo->query('SELECT id, username, nama_lengkap, email, created_at FROM users WHERE is_active = FALSE ORDER BY created_at DESC LIMIT 5');
+    if ($admin_org_id) {
+        $stmt = $pdo->prepare('
+            SELECT u.id, u.username, u.nama_lengkap, u.email, u.created_at,
+                   o.nama AS org_name
+            FROM users u
+            LEFT JOIN organizations o ON u.organization_id = o.id
+            WHERE u.is_active = FALSE
+              AND u.organization_id = ?
+            ORDER BY u.created_at DESC LIMIT 5
+        ');
+        $stmt->execute([$admin_org_id]);
+    } else {
+        $stmt = $pdo->query('
+            SELECT u.id, u.username, u.nama_lengkap, u.email, u.created_at, NULL AS org_name
+            FROM users u
+            WHERE u.is_active = FALSE
+            ORDER BY u.created_at DESC LIMIT 5
+        ');
+    }
     $pending_users = $stmt->fetchAll();
 } catch (PDOException $ex) { error_log($ex->getMessage()); }
+
 
 $page_title = 'Dashboard Admin';
 $active_nav = 'dashboard';

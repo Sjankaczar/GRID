@@ -54,6 +54,23 @@ $_nav_items = [
                 <small class="text-muted">Logged in as</small><br>
                 <strong class="small"><?= e($_SESSION['nama_lengkap']) ?></strong><br>
                 <span class="badge bg-success" style="font-size:0.7rem;"><?= e($_SESSION['role']) ?></span>
+                <?php if (!empty($_SESSION['organization_id'])): ?>
+                <div class="mt-1" style="font-size:0.7rem;color:var(--text-muted);">
+                    <?php
+                    // Tampilkan nama org dari session jika sudah disimpan, atau query singkat
+                    if (!isset($_SESSION['org_nama'])) {
+                        global $pdo;
+                        $s = $pdo->prepare('SELECT nama, kode_unik FROM organizations WHERE id = ? LIMIT 1');
+                        $s->execute([$_SESSION['organization_id']]);
+                        $o = $s->fetch();
+                        $_SESSION['org_nama']  = $o['nama']    ?? '';
+                        $_SESSION['org_kode']  = $o['kode_unik'] ?? '';
+                    }
+                    ?>
+                    <i class="fa fa-building me-1"></i><?= e($_SESSION['org_nama']) ?>
+                    <span class="text-muted ms-1">(<?= e($_SESSION['org_kode']) ?>)</span>
+                </div>
+                <?php endif; ?>
             </div>
             <form method="POST" action="<?= APP_URL ?>/logout.php">
                 <?= csrf_field() ?>

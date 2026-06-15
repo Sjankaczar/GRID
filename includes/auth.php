@@ -108,10 +108,11 @@ function create_user_session(array $user): void {
     // Regenerate session ID untuk mencegah session fixation
     session_regenerate_id(true);
 
-    $_SESSION['user_id']      = $user['id'];
-    $_SESSION['username']     = $user['username'];
-    $_SESSION['nama_lengkap'] = $user['nama_lengkap'];
-    $_SESSION['role']         = $user['role'];
-    $_SESSION['avatar_url']   = $user['avatar_url'];
-    $_SESSION['last_activity'] = time();
+    $_SESSION['user_id']         = $user['id'];
+    $_SESSION['username']        = $user['username'];
+    $_SESSION['nama_lengkap']    = $user['nama_lengkap'];
+    $_SESSION['role']            = $user['role'];
+    $_SESSION['avatar_url']      = $user['avatar_url'];
+    $_SESSION['organization_id'] = $user['organization_id'] ?? null;
+    $_SESSION['last_activity']   = time();
 }

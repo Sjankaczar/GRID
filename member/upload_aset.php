@@ -182,7 +182,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div class="card">
                 <div class="card-body p-4">
                     <form method="POST" enctype="multipart/form-data" novalidate>
-                        <?php include '../includes/csrf.php'; echo csrf_field(); ?>
+                        <?php require_once '../includes/csrf.php'; echo csrf_field(); ?>
 
                         <!-- Pilih Proyek -->
                         <div class="mb-4">

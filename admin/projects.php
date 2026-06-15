@@ -28,18 +28,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $errors = array_merge($errors, $cover_url);
             } else {
                 $id = generateUUID();
+                $admin_org_id = $_SESSION['organization_id'] ?? null;
                 $stmt = $pdo->prepare('
                     INSERT INTO projects
-                        (id, nama_game, deskripsi, genre, platform, engine, status, cover_url, tanggal_mulai, target_rilis, lead_id)
+                        (id, nama_game, deskripsi, genre, platform, engine, status, cover_url, tanggal_mulai, target_rilis, lead_id, organization_id)
                     VALUES
-                        (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ');
                 $stmt->execute([
                     $id,
                     $data['nama_game'], $data['deskripsi'], $data['genre'],
                     $data['platform'],  $data['engine'],    $data['status'],
                     $cover_url,         $data['tanggal_mulai'], $data['target_rilis'],
-                    $data['lead_id'] ?: null,
+                    $data['lead_id'] ?: null, $admin_org_id,
                 ]);
                 set_flash('success', 'Proyek "' . $data['nama_game'] . '" berhasil dibuat.');
                 redirect(APP_URL . '/admin/projects.php');
@@ -131,32 +132,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
  
 // TENTUKAN VIEW
-$view       = $_GET['view'] ?? 'list';
-$edit_id    = $_GET['id']   ?? null;
-$project    = null;
-$members    = [];
-$non_members= [];
-$all_users  = get_all_active_users($pdo);
- 
+// Scope semua data ke organisasi admin yang login
+$view         = $_GET['view'] ?? 'list';
+$edit_id      = $_GET['id']   ?? null;
+$project      = null;
+$members      = [];
+$non_members  = [];
+$admin_org_id = $_SESSION['organization_id'] ?? null;
+$all_users    = get_active_users_by_org($pdo, $admin_org_id);
+
 if ($view === 'form' && $edit_id) {
     $project = get_project_by_id($pdo, $edit_id);
-    if (!$project) { set_flash('error', 'Proyek tidak ditemukan.'); redirect(APP_URL . '/admin/projects.php'); }
+    if (!$project || $project['organization_id'] !== $admin_org_id) {
+        set_flash('error', 'Proyek tidak ditemukan atau bukan milik organisasi kamu.');
+        redirect(APP_URL . '/admin/projects.php');
+    }
 
     if (!empty($errors)) {
         $project = array_merge($project, _map_post_to_project($_POST));
     }
 } elseif ($view === 'form' && !empty($errors)) {
-    
     $project = _map_post_to_project($_POST);
 } elseif ($view === 'members' && $edit_id) {
     $project     = get_project_by_id($pdo, $edit_id);
-    if (!$project) { set_flash('error', 'Proyek tidak ditemukan.'); redirect(APP_URL . '/admin/projects.php'); }
+    if (!$project || $project['organization_id'] !== $admin_org_id) {
+        set_flash('error', 'Proyek tidak ditemukan atau bukan milik organisasi kamu.');
+        redirect(APP_URL . '/admin/projects.php');
+    }
     $members     = get_project_members($pdo, $edit_id);
-    $non_members = get_non_project_members($pdo, $edit_id);
+    $non_members = get_non_project_members_by_org($pdo, $edit_id, $admin_org_id);
 }
- 
+
 // list view
-$projects = ($view === 'list') ? get_all_projects($pdo) : [];
+$projects = ($view === 'list') ? get_all_projects_by_org($pdo, $admin_org_id) : [];
+
  
 // HELPER FUNCTIONS 
 function _validate_project_form(array $post): array {

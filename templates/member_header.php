@@ -3,11 +3,13 @@
 require_once ROOT_PATH . 'includes/csrf.php';
  
 $_nav_items = [
-    'dashboard' => ['url' => APP_URL . '/member/dashboard.php',    'icon' => 'fa-home',           'label' => 'Dashboard'],
-    'upload'    => ['url' => APP_URL . '/member/upload_aset.php',  'icon' => 'fa-cloud-upload-alt','label' => 'Upload Aset'],
-    'devlog'    => ['url' => APP_URL . '/member/devlog.php',       'icon' => 'fa-book-open',       'label' => 'Devlog'],
-    'kanban'    => ['url' => APP_URL . '/member/kanban.php',       'icon' => 'fa-columns',         'label' => 'Kanban'],
-    'bug'       => ['url' => APP_URL . '/member/bug_report.php',   'icon' => 'fa-bug',             'label' => 'Bug Report'],
+    'dashboard'   => ['url' => APP_URL . '/member/dashboard.php',    'icon' => 'fa-home',           'label' => 'Dashboard'],
+    'my_projects' => ['url' => APP_URL . '/member/my_projects.php',  'icon' => 'fa-gamepad',        'label' => 'Proyek Saya'],
+    'my_assets'   => ['url' => APP_URL . '/member/my_assets.php',    'icon' => 'fa-image',          'label' => 'Aset Saya'],
+    'upload'      => ['url' => APP_URL . '/member/upload_aset.php',  'icon' => 'fa-cloud-upload-alt','label' => 'Upload Aset'],
+    'devlog'      => ['url' => APP_URL . '/member/devlog.php',       'icon' => 'fa-book-open',       'label' => 'Devlog'],
+    'kanban'      => ['url' => APP_URL . '/member/kanban.php',       'icon' => 'fa-columns',         'label' => 'Kanban'],
+    'bug'         => ['url' => APP_URL . '/member/bug_report.php',   'icon' => 'fa-bug',             'label' => 'Bug Report'],
 ];
 ?>
 <!DOCTYPE html>
@@ -54,6 +56,21 @@ $_nav_items = [
                 <small class="text-muted">Logged in as</small><br>
                 <strong class="small"><?= e($_SESSION['nama_lengkap']) ?></strong><br>
                 <span class="badge bg-primary" style="font-size:0.7rem;"><?= e($_SESSION['role']) ?></span>
+                <?php if (!empty($_SESSION['organization_id'])): ?>
+                <div class="mt-1" style="font-size:0.7rem;color:var(--text-muted);">
+                    <?php
+                    if (!isset($_SESSION['org_nama'])) {
+                        global $pdo;
+                        $s = $pdo->prepare('SELECT nama, kode_unik FROM organizations WHERE id = ? LIMIT 1');
+                        $s->execute([$_SESSION['organization_id']]);
+                        $o = $s->fetch();
+                        $_SESSION['org_nama'] = $o['nama']     ?? '';
+                        $_SESSION['org_kode'] = $o['kode_unik'] ?? '';
+                    }
+                    ?>
+                    <i class="fa fa-building me-1"></i><?= e($_SESSION['org_nama']) ?>
+                </div>
+                <?php endif; ?>
             </div>
             <form method="POST" action="<?= APP_URL ?>/logout.php">
                 <?= csrf_field() ?>

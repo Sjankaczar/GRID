@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Jun 14, 2026 at 12:50 PM
+-- Generation Time: Jun 15, 2026 at 03:38 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -44,6 +44,15 @@ CREATE TABLE `assets` (
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Dumping data for table `assets`
+--
+
+INSERT INTO `assets` (`id`, `project_id`, `nama_aset`, `kategori`, `file_url`, `thumbnail_url`, `ukuran_kb`, `format`, `tags`, `versi`, `uploader_id`, `status`, `created_at`) VALUES
+('1b6aab54-0ea4-43d9-9195-601b827c52ab', 'e80e9911-9b67-4a95-bb4f-6828b3a658f2', 'apa aja', 'Sprite', '/uploads/sprite/1781525144_RobloxScreenShot20250306_055952482png', NULL, 2031, 'png', '', '1.0', NULL, 'Approved', '2026-06-15 12:05:44'),
+('b36cd18a-0fa7-4dd9-b2de-4b2c83381c83', '633f7dce-d5f1-46fc-8cdd-50289cd86471', 'apa aja3', 'Sprite', '/uploads/sprite/1781530544_RobloxScreenShot20250306_055952482png', NULL, 2031, 'png', '', '1.0', 'd530beb7-5d28-4988-bfc2-e54b582fade6', 'Approved', '2026-06-15 13:35:44'),
+('e7233bc8-0a19-4204-b746-00e73bc7c98b', 'e80e9911-9b67-4a95-bb4f-6828b3a658f2', 'apa aja2', 'Sprite', '/uploads/sprite/1781525385_RobloxScreenShot20250306_055952482png', NULL, 2031, 'png', '', '1.0', NULL, 'Approved', '2026-06-15 12:09:45');
+
 -- --------------------------------------------------------
 
 --
@@ -68,6 +77,29 @@ CREATE TABLE `devlogs` (
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `organizations`
+--
+
+DROP TABLE IF EXISTS `organizations`;
+CREATE TABLE `organizations` (
+  `id` char(36) NOT NULL,
+  `nama` varchar(100) NOT NULL,
+  `kode_unik` varchar(20) NOT NULL,
+  `deskripsi` text DEFAULT NULL,
+  `owner_id` char(36) DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `organizations`
+--
+
+INSERT INTO `organizations` (`id`, `nama`, `kode_unik`, `deskripsi`, `owner_id`, `created_at`) VALUES
+('245f27e1-0f73-4ce2-9d4e-1e0b1b1ddc76', 'Kota Saya Solo', 'KOTASAYASOLO', NULL, '211ca861-545a-4fd1-8a2c-b06c07e52507', '2026-06-15 13:18:41');
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `projects`
 --
 
@@ -83,8 +115,17 @@ CREATE TABLE `projects` (
   `cover_url` varchar(255) DEFAULT NULL,
   `tanggal_mulai` date DEFAULT NULL,
   `target_rilis` date DEFAULT NULL,
-  `lead_id` char(36) DEFAULT NULL
+  `lead_id` char(36) DEFAULT NULL,
+  `organization_id` char(36) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `projects`
+--
+
+INSERT INTO `projects` (`id`, `nama_game`, `deskripsi`, `genre`, `platform`, `engine`, `status`, `cover_url`, `tanggal_mulai`, `target_rilis`, `lead_id`, `organization_id`) VALUES
+('633f7dce-d5f1-46fc-8cdd-50289cd86471', 'celeste', 'des', 'aaa', 'PC', 'Unity', 'Planning', NULL, '2026-06-15', '2026-06-25', 'd530beb7-5d28-4988-bfc2-e54b582fade6', '245f27e1-0f73-4ce2-9d4e-1e0b1b1ddc76'),
+('e80e9911-9b67-4a95-bb4f-6828b3a658f2', 'fawf', 'wadawfa', 'afaf', 'afaff', 'afafa', 'Planning', NULL, '2026-06-14', '2026-06-26', NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -99,6 +140,13 @@ CREATE TABLE `project_members` (
   `user_id` char(36) NOT NULL,
   `joined_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `project_members`
+--
+
+INSERT INTO `project_members` (`id`, `project_id`, `user_id`, `joined_at`) VALUES
+('bf4a2a2b-0e63-4e21-9b50-957525ab09f3', '633f7dce-d5f1-46fc-8cdd-50289cd86471', 'd530beb7-5d28-4988-bfc2-e54b582fade6', '2026-06-15 13:34:47');
 
 -- --------------------------------------------------------
 
@@ -136,6 +184,7 @@ CREATE TABLE `users` (
   `role` enum('Admin','Member','Guest') DEFAULT 'Guest',
   `avatar_url` varchar(255) DEFAULT NULL,
   `is_active` tinyint(1) DEFAULT 0,
+  `organization_id` char(36) DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
@@ -143,8 +192,9 @@ CREATE TABLE `users` (
 -- Dumping data for table `users`
 --
 
-INSERT INTO `users` (`id`, `username`, `nama_lengkap`, `email`, `password_hash`, `role`, `avatar_url`, `is_active`, `created_at`) VALUES
-('79deeda9-05d9-4e42-850b-f40ea63a6427', 'admin', 'Studio Lead', 'admin@grid.local', '$2y$10$M9DmrfJdxbtVkyYidUToT.fcJvWh94QqwhjXpASnUzX9wt78vkHiK', 'Admin', NULL, 1, '2026-06-07 03:47:35');
+INSERT INTO `users` (`id`, `username`, `nama_lengkap`, `email`, `password_hash`, `role`, `avatar_url`, `is_active`, `organization_id`, `created_at`) VALUES
+('211ca861-545a-4fd1-8a2c-b06c07e52507', 'jokowi', 'pangeran nipunegoro mangku janda limo', 'jkw@gmail.com', '$2y$10$ansdDrtA0.wLjd4KIk5bIel6ub2gkRZMGFL.RM5EX5ZtQrio/U0F2', 'Admin', NULL, 1, '245f27e1-0f73-4ce2-9d4e-1e0b1b1ddc76', '2026-06-15 13:18:41'),
+('d530beb7-5d28-4988-bfc2-e54b582fade6', 'budi', 'budiono', 'budi@gmail.com', '$2y$10$gVXDZy5PpfSefxeCblhi6Ot.QIFei0St83o4rPFSvJ3gqiG.KG1eu', 'Member', NULL, 1, '245f27e1-0f73-4ce2-9d4e-1e0b1b1ddc76', '2026-06-15 13:33:19');
 
 --
 -- Indexes for dumped tables
@@ -167,11 +217,19 @@ ALTER TABLE `devlogs`
   ADD KEY `penulis_id` (`penulis_id`);
 
 --
+-- Indexes for table `organizations`
+--
+ALTER TABLE `organizations`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `kode_unik` (`kode_unik`);
+
+--
 -- Indexes for table `projects`
 --
 ALTER TABLE `projects`
   ADD PRIMARY KEY (`id`),
-  ADD KEY `lead_id` (`lead_id`);
+  ADD KEY `lead_id` (`lead_id`),
+  ADD KEY `projects_ibfk_org` (`organization_id`);
 
 --
 -- Indexes for table `project_members`
@@ -195,7 +253,8 @@ ALTER TABLE `tasks`
 ALTER TABLE `users`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `username` (`username`),
-  ADD UNIQUE KEY `email` (`email`);
+  ADD UNIQUE KEY `email` (`email`),
+  ADD KEY `users_ibfk_org` (`organization_id`);
 
 --
 -- Constraints for dumped tables
@@ -219,7 +278,8 @@ ALTER TABLE `devlogs`
 -- Constraints for table `projects`
 --
 ALTER TABLE `projects`
-  ADD CONSTRAINT `projects_ibfk_1` FOREIGN KEY (`lead_id`) REFERENCES `users` (`id`) ON DELETE SET NULL;
+  ADD CONSTRAINT `projects_ibfk_1` FOREIGN KEY (`lead_id`) REFERENCES `users` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `projects_ibfk_org` FOREIGN KEY (`organization_id`) REFERENCES `organizations` (`id`) ON DELETE SET NULL;
 
 --
 -- Constraints for table `project_members`
@@ -234,6 +294,12 @@ ALTER TABLE `project_members`
 ALTER TABLE `tasks`
   ADD CONSTRAINT `tasks_ibfk_1` FOREIGN KEY (`project_id`) REFERENCES `projects` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `tasks_ibfk_2` FOREIGN KEY (`assignee_id`) REFERENCES `users` (`id`) ON DELETE SET NULL;
+
+--
+-- Constraints for table `users`
+--
+ALTER TABLE `users`
+  ADD CONSTRAINT `users_ibfk_org` FOREIGN KEY (`organization_id`) REFERENCES `organizations` (`id`) ON DELETE SET NULL;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
