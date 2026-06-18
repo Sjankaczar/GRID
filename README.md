@@ -1,5 +1,7 @@
 # GRID (Game Repository & Indie Devlog)
 
+🌐 **Live Demo:** [grid.freedev.app](https://grid.freedev.app)
+
 **GRID** is a collaborative web platform designed specifically to facilitate the Indie Game Developer ecosystem. This platform integrates project management, asset repositories, development documentation (devlogs), and bug reporting into one cohesive ecosystem.
 
 ## Key Features
